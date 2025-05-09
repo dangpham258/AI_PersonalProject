@@ -233,6 +233,17 @@ class EightPuzzle:
                 else:
                     self.cells[i][j].config(text=str(value))
 
+    def update_status(self, message):
+        self.status_var.set(message)
+        self.root.update()
+
+    def update_board_from_assignment(self, assignment):
+        for i in range(3):
+            for j in range(3):
+                val = assignment.get((i, j), 0)
+                self.cells[i][j].config(text=str(val) if val != 0 else "")
+        self.root.update()
+
     def randomize_state(self):
         if self.solving:
             return
@@ -455,10 +466,10 @@ class EightPuzzle:
         self.solve_with_algorithm(self.solver.min_conflicts, "Min-Conflicts")
 
     def solve_forward_checking(self):
-        self.solve_with_algorithm(self.solver.forward_checking, "Forward Checking")
+        self.solve_with_algorithm(lambda state: self.solver.forward_checking(state, ui=self), "Forward Checking")
 
     def solve_backtracking(self):
-        self.solve_with_algorithm(self.solver.backtracking_search, "Backtracking")
+        self.solve_with_algorithm(lambda state: self.solver.backtracking_search(state, ui=self), "Backtracking")
 
     def solve_q_learning(self):
         self.solve_with_algorithm(self.solver.q_learning, "Q-Learning")

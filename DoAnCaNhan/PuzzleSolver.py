@@ -663,7 +663,7 @@ class PuzzleSolver:
                 return False
         return len([x for row in state for x in row if x != 0]) == 9
     
-    def backtracking_search(self, initial_state):
+    def backtracking_search(self, initial_state, ui=None):
         variables = [(i,j) for i in range(3) for j in range(3)]
         domains = {v: list(range(9)) for v in variables}
         assignment = {}
@@ -673,34 +673,50 @@ class PuzzleSolver:
             temp = [[assign.get((i,j), 0) for j in range(3)] for i in range(3)]
             r, c = var
             temp[r][c] = val
-            # all-different check
             vals = [temp[x][y] for x in range(3) for y in range(3) if temp[x][y] != 0]
-            if len(vals) != len(set(vals)):
-                return False
-            return True
+            return len(vals) == len(set(vals))
 
         def backtrack(assign):
             nonlocal steps
             steps += 1
+            if ui:
+                ui.update_status(f"Backtracking: Step {steps}")
+                ui.update_board_from_assignment(assign)
+                time.sleep(0.5)  # Pause to allow user to observe
             if len(assign) == 9:
                 state = [[assign[(i,j)] for j in range(3)] for i in range(3)]
-                return state if self.is_goal_for_CSPs(state) else None
+                if self.is_goal_for_CSPs(state):
+                    if ui:
+                        ui.update_status("Solution found!")
+                    return state
+                else:
+                    if ui:
+                        ui.update_status("Assignment does not satisfy goal, backtracking...")
+                    return None
 
             var = next(v for v in variables if v not in assign)
             for val in domains[var]:
                 if is_consistent(var, val, assign):
                     assign[var] = val
                     result = backtrack(assign)
-                    if result:
+                    if result is not None:
                         return result
                     del assign[var]
+                    if ui:
+                        ui.update_status(f"Backtracking from {var} with value {val}")
+                else:
+                    if ui:
+                        ui.update_status(f"{val} is not consistent with {var}")
+            if ui:
+                ui.update_status(f"No suitable value for {var}, backtracking...")
             return None
 
         solution = backtrack(assignment)
+        if solution is None and ui:
+            ui.update_status("No solution found.")
         return solution, steps
 
-    # Forward Checking
-    def forward_checking(self, initial_state):
+    def forward_checking(self, initial_state, ui=None):
         if not isinstance(initial_state, list) or not all(isinstance(row, list) for row in initial_state):
             raise ValueError("initial_state must be a 3x3 matrix")
         if len(initial_state) != 3 or any(len(row) != 3 for row in initial_state):
@@ -711,7 +727,7 @@ class PuzzleSolver:
         assignment = {}
         for i, j in variables:
             if initial_state[i][j] == 0:
-                domains[(i, j)] = list(range(1, 10))  # Giả sử giá trị từ 1-9
+                domains[(i, j)] = list(range(1, 10))  # Assuming values from 1-9
             else:
                 val = initial_state[i][j]
                 domains[(i, j)] = [val]
@@ -721,26 +737,45 @@ class PuzzleSolver:
 
         def inference(var, val, doms, assign):
             inf = {}
+            if ui:
+                ui.update_status(f"Forward checking for {var} with value {val}")
             for other in doms:
                 if other in assign or other == var:
                     continue
                 if val in doms[other]:
                     doms[other].remove(val)
                     inf.setdefault(other, []).append(val)
+                    if ui:
+                        ui.update_status(f"Removed {val} from domain of {other}: {doms[other]}")
                     if not doms[other]:
+                        if ui:
+                            ui.update_status(f"Domain of {other} is empty, failure!")
                         return 'failure'
             return inf
 
         def undo(inf, doms):
             for v, lst in inf.items():
                 doms[v].extend(lst)
+                if ui:
+                    ui.update_status(f"Restored domain for {v}: {doms[v]}")
 
         def backtrack(assign, doms):
             nonlocal steps
             steps += 1
+            if ui:
+                ui.update_status(f"Forward Checking: Step {steps}")
+                ui.update_board_from_assignment(assign)
+                time.sleep(0.5)  # Pause to allow user to observe
             if len(assign) == 9:
                 state = [[assign.get((i, j), 0) for j in range(3)] for i in range(3)]
-                return state if self.is_goal_for_CSPs(state) else None
+                if self.is_goal_for_CSPs(state):
+                    if ui:
+                        ui.update_status("Solution found!")
+                    return state
+                else:
+                    if ui:
+                        ui.update_status("Assignment does not satisfy goal, backtracking...")
+                    return None
 
             var = min((v for v in doms if v not in assign), key=lambda x: len(doms[x]))
             for val in sorted(doms[var], key=lambda v: self.manhattan_distance(
@@ -749,21 +784,30 @@ class PuzzleSolver:
                 inf = inference(var, val, doms, assign)
                 if inf != 'failure':
                     result = backtrack(assign, doms)
-                    if result:
+                    if result is not None:
                         return result
                     undo(inf, doms)
+                    if ui:
+                        ui.update_status(f"Backtracking from {var} with {val}, restoring domains")
+                else:
+                    if ui:
+                        ui.update_status(f"Forward checking failed for {var} with {val}")
                 del assign[var]
+                if ui:
+                    ui.update_status(f"Removed assignment {val} from {var}")
+            if ui:
+                ui.update_status(f"No suitable value for {var}, backtracking...")
             return None
 
         solution = backtrack(assignment, domains)
+        if solution is None and ui:
+            ui.update_status("No solution found.")
         return solution, steps
 
-    # Min-Conflicts
     def conflicts(self, state, pos, val):
         r,c = pos
         temp = copy.deepcopy(state)
         temp[r][c] = val
-        # row/col duplicates
         rv = [x for x in temp[r] if x]
         cv = [temp[i][c] for i in range(3) if temp[i][c]]
         dup = (len(rv)-len(set(rv))) + (len(cv)-len(set(cv)))
