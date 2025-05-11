@@ -1,4 +1,16 @@
-# AI_PersonalProject
+# AI_PersonalProject: ỨNG DỤNG CÁC THUẬT TOÁN TÌM KIẾM VÀO BÀI TOÁN 8-PUZZLE
+
+## MỤC LỤC
+
+- [1. Mục tiêu](#1-mục-tiêu)
+- [2. Nội dung](#2-nội-dung)
+  - [2.1. Các thuật toán Tìm kiếm không có thông tin (Uninformed Search Algorithms)](#21-các-thuật-toán-tìm-kiếm-không-có-thông-tin-uninformed-search-algorithms)
+  - [2.2. Các thuật toán Tìm kiếm có thông tin (Informed Search Algorithms)](#22-các-thuật-toán-tìm-kiếm-có-thông-tin-informed-search-algorithms)
+  - [2.3. Các thuật toán Tìm kiếm cục bộ (Local Search Algorithms)](#23-các-thuật-toán-tìm-kiếm-cục-bộ-local-search-algorithms)
+  - [2.4. Các thuật toán Tìm kiếm trong môi trường phức tạp (Complex Environment)](#24-các-thuật-toán-tìm-kiếm-trong-môi-trường-phức-tạp-complex-environment)
+  - [2.5. Các thuật toán Tìm kiếm thỏa mãn ràng buộc (Constraint Satisfaction Problem)](#25-các-thuật-toán-tìm-kiếm-thỏa-mãn-ràng-buộc-constraint-satisfaction-problem)
+  - [2.6. Các thuật toán Tìm kiếm học tăng cường (Reinforcement Learning)](#26-các-thuật-toán-tìm-kiếm-học-tăng-cường-reinforcement-learning)
+- [3. KẾT LUẬN](#3-kết-luận)
 
 ## 1. Mục tiêu
 
@@ -26,15 +38,18 @@
 - Độ phức tạp thời gian: $1 + b + b^2 + ... + b^d = O(b^d)$
 - Độ phức tạp không gian: $O(b^d)$
 
-![BFS](/DoAnCaNhan/BFS.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/BFS.gif" width="300"/>
+</div>
 
 ##### Depth-First Search (DFS):
 - Ưu tiên mở rộng theo chiều sâu, đi theo một nhánh cho đến khi không thể đi tiếp
 - Open List: Ngăn xếp.
 - Độ phức tạp thời gian: $T(n)= 1+ n^2 + n^3 +...+ n^m =O(n^m)$
 - Độ phức tạp không gian: $O(bm)$
-
-![DFS](/DoAnCaNhan/DFS.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/DFS.gif" width="300"/>
+</div>
 
 ##### Uniform Cost Search (UCS):
 - Mở rộng nút có chi phí đường dẫn tối thiểu.
@@ -42,7 +57,9 @@
 - Độ phức tạp thời gian: $O(b^{1 + [C*/ε]})$
 - Độ phức tạp không gian: $O(b^{1 + [C*/ε]})$
 
-![UCS](/DoAnCaNhan/UCS.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/UCS.gif" width="300"/>
+</div>
 
 ##### Iterative Deepening Search (IDS):
 - Kết hợp ưu điểm của BFS và DFS. Tìm theo chiều sâu nhưng giới hạn độ sâu, tăng dần qua mỗi vòng.
@@ -51,10 +68,14 @@
 - Độ phức tạp thời gian: $O(b^d)$
 - Độ phức tạp không gian: $O(bd)$ 
 
-![IDS](/DoAnCaNhan/IDS.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/IDS.gif" width="300"/>
+</div>
 
 ##### So sánh các thuật toán trong nhóm
-![Comparison](/DoAnCaNhan/CompareUninformedSearch.png)
+<div style="text-align: center;">
+  <img src="PicsAndGif/CompareUninformedSearch.png"/>
+</div>
 
 #### 2.2. Các thuật toán Tìm kiếm có thông tin (Informed Search Algorithms)
 
@@ -70,7 +91,9 @@
     - m là độ sâu của cây/đồ thị khi tìm ra Solution
 - Độ phức tạp về không gian: trong trường hợp xấu nhất là $O(b^m)$
 
-![Greedy](/DoAnCaNhan/Greedy.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/Greedy.gif" width="300"/>
+</div>
 
 ##### A* Search:
 - Sử dụng hàm đánh giá f(N) = g(N) + h(N)
@@ -80,7 +103,9 @@
 - Open List: hàng đợi ưu tiên
 - Độ phức tạp tính toán và yêu cầu bộ nhớ của A* đều là $O(b^m)$
 
-![Astar](/DoAnCaNhan/Astar.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/Astar.gif" width="300"/>
+</div>
 
 ##### IDA* Search:
 - Mở rộng từ thuật toán A*, sử dụng các khái niệm về DFS lặp lại - làm sâu dựa trên các ngưỡng đặt trước.
@@ -91,10 +116,14 @@
     - b: số nhánh
     - d: là độ sâu
 
-![IDAstar](/DoAnCaNhan/IDAstar.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/IDAstar.gif" width="300"/>
+</div>
 
 ##### So sánh các thuật toán trong nhóm
-![Comparison](/DoAnCaNhan/CompareInformedSearch.png)
+<div style="text-align: center;">
+  <img src="PicsAndGif/CompareInformedSearch.png"/>
+</div>
 
 #### 2.3. Các thuật toán Tìm kiếm cục bộ (Local Search Algorithms)
 
@@ -113,7 +142,9 @@ Chỉ kiểm tra từng trạng thái lận cận của nó và nếu nó tìm t
 - BƯỚC 5: Lặp lại BƯỚC 2-BƯỚC 4 trong n lần lặp hoặc cho đến khi giá trị của mục tiêu tại trạng thái hiện tại cao hơn tất cả các hàng xóm.
 - BƯỚC 6: Trả về trạng thái hiện tại và giá trị hàm mục tiêu của nó.
 
-![SimpleHC](/DoAnCaNhan/SimpleHillClimbing.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/SimpleHillClimbing.gif" width="300"/>
+</div>
 
 ##### Leo đồi dốc nhất (Steepest-Ascent hill-climbing)
 Thuật toán này kiểm tra tất cả các nút lân cận của trạng thái hiện tại và chọn một nút lân cận gần nhất với trạng thái mục tiêu.
@@ -125,7 +156,9 @@ Thuật toán này kiểm tra tất cả các nút lân cận của trạng thá
 - BƯỚC 5: Lặp lại BƯỚC 2-BƯỚC 4 trong n lần lặp.
 - BƯỚC 6: Trả về trạng thái hiện tại và giá trị hàm mục tiêu của nó.
 
-![SteepestHC](/DoAnCaNhan/SteepestHillClimbing.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/SteepestHillClimbing.gif" width="300"/>
+</div>
 
 ##### Leo đồi ngẫu nhiên (Stochastic hill Climbing)
 Lựa chọn ngẫu nhiên một hàng xóm. Nếu hàng xóm đó tốt hơn trạng thái hiện tại, hàng xóm đó sẽ được chọn làm trạng thái hiện tại và thuật toán lặp lại. Ngược lại, nếu hàng xóm được chọn không tốt hơn, thuật toán sẽ chọn ngẫu nhiên một hàng xóm khác và so sánh. Thuật toán kết thúc và trả lại trạng thái hiện tại khi đã hết “kiên nhẫn” (vượt ngưỡng).
@@ -139,25 +172,35 @@ thành trạng thái hiện tại.
 - BƯỚC 5: Lặp lại BƯỚC 2-BƯỚC 4 trong n lần lặp.
 - BƯỚC 6: Trả về trạng thái hiện tại và giá trị hàm mục tiêu của nó.
 
-![StochasticHC](/DoAnCaNhan/StochasticHillClimbing.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/StochasticHillClimbing.gif" width="300"/>
+</div>
 
 ##### Simulated Annealing
 Cho phép thoát khỏi đỉnh cục bộ bằng cách chấp nhận trạng thái kém hơn theo xác suất, giảm dần theo "nhiệt độ".
 
-![SimulatedAnnealing](/DoAnCaNhan/SimulatedAnnealing.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/SimulatedAnnealing.gif" width="300"/>
+</div>
 
 ##### Beam Search
 Giữ lại k trạng thái tốt nhất tại mỗi bước (k-beam). Giống BFS nhưng giới hạn độ rộng.
 
-![BeamSearch](/DoAnCaNhan/BeamSearch.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/BeamSearch.gif" width="300"/>
+</div>
 
 ##### Genetic Algorithms
 Lấy cảm hứng từ di truyền học: khởi tạo quần thể, chọn lọc, lai ghép, đột biến để tạo thế hệ tiếp theo.
 
-![GeneticAlgo](/DoAnCaNhan/GeneticAlgorithms.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/GeneticAlgorithms.gif" width="300"/>
+</div>
 
 ##### So sánh các thuật toán trong nhóm
-![Comparison](/DoAnCaNhan/CompareLocalSearch.png)
+<div style="text-align: center;">
+  <img src="PicsAndGif/CompareLocalSearch.png"/>
+</div>
 
 - **Chú thích**:
     - SH: Stochastic Hill Climbing
@@ -178,7 +221,9 @@ Lấy cảm hứng từ di truyền học: khởi tạo quần thể, chọn l�
 - Cấu trúc tìm kiếm: AND-OR TREE.
 - Giải pháp: dùng AND-OR Search.
 
-![Nondeterministic](/DoAnCaNhan/Nondeterministic.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/Nondeterministic.gif" width="300"/>
+</div>
 
 ##### Search with No Observation
 - Không có thông tin gì về trạng thái hiện tại.
@@ -188,15 +233,22 @@ Lấy cảm hứng từ di truyền học: khởi tạo quần thể, chọn l�
     - Lặp lại cho đến khi tất cả trạng thái đều đạt trạng thái đích.
 - Giải pháp: xây dựng Belief State Search (duy trì tập hợp trạng thái niềm tin)
 
-![NoObservation](/DoAnCaNhan/NoObservation.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/NoObservation.gif" width="300"/>
+</div>
 
 ##### Partially Observable Search
 - Tác nhân không thấy toàn bộ môi trường, nhưng có thể cảm nhận một phần (ví dụ qua cảm biến).
 - Giải pháp: dùng belief update sau mỗi hành động và quan sát.
 
-![PartiallyObservable](/DoAnCaNhan/PartiallyObservable.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/PartiallyObservable.gif" width="300"/>
+</div>
 
-$\to$ Nhóm thuật toán này trong đồ án hiện đang phát triển.
+##### So sánh các thuật toán trong nhóm
+<div style="text-align: center;">
+  <img src="PicsAndGif/CompareComplexEnvSearch.png"/>
+</div>
 
 #### 2.5. Các thuật toán Tìm kiếm thỏa mãn ràng buộc (Constraint Satisfaction Problem)
 
@@ -215,6 +267,10 @@ $\to$ Bài toán ràng buộc (CSP) là dạng bài toán trong đó mỗi biế
     - d: số miền
     - n: số biến
 
+<div style="text-align: center;">
+  <img src="PicsAndGif/Backtracking.gif" width="300"/>
+</div>
+
 ##### Forward Checking
 - Bản cải tiến của Backtracking. Sau khi gán giá trị cho một biến, loại bỏ các giá trị bất hợp lệ ra khỏi miền của các biến liên quan.
 - Open List: danh sách miền cập nhật cho từng biến.
@@ -228,6 +284,8 @@ $\to$ Bài toán ràng buộc (CSP) là dạng bài toán trong đó mỗi biế
 
 - Độ phức tạp thời gian: $O(n)$
 - Độ phức tạp không gian: $O(n)$
+
+$\to$ Nhóm thuật toán này trong đồ án hiện đang phát triển.
 
 #### 2.6. Các thuật toán Tìm kiếm học tăng cường (Reinforcement Learning)
 
@@ -252,7 +310,9 @@ $Q(s,a) ← Q(s,a) + \alpha[r+ \gamma maxQ(s', a') − Q(s,a)]$
 
 $\to$ Đây là thuật toán không phù hợp để giải bài toán 8-Puzzle.
 
-![Q_Learning](/DoAnCaNhan/Q_Learning.gif)
+<div style="text-align: center;">
+  <img src="PicsAndGif/Q_Learning.gif" width="500"/>
+</div>
 
 ##### SARSA
 - Học bảng Q tương tự Q-Learning nhưng theo chính sách hiện tại.
@@ -267,3 +327,13 @@ $Q(s,a) ← Q(s,a) + \alpha[r+ \gamma Q(s', a') − Q(s,a)]$
     - Target network: giữ mạng Q mục tiêu ổn định.
 - Công thức cập nhật:
 $loss = (r + \gamma * max(Q_target(s'), a') - Q(s, a))^2$
+
+## 3. KẾT LUẬN
+Đồ án đã tổng hợp và mô phỏng gần như đầy đủ các thuật toán tìm kiếm:
+    - Tìm kiếm mù: BFS, DFS, IDS, UCS.
+    - Tìm kiếm có thông tin: Greedy, A*, IDA*.
+    - Tìm kiếm cục bộ: Simple hill Climbing, Steepest-Ascent hill-climbing, Stochastic hill Climbing, Simulated Annealing, Beam Search, Genetic Algorithms.
+    - Tìm kiếm trong môi trường phức tạp: Search in Nondeterministic, Search with No Observation, Partially Observable Search.
+    - Tìm kiếm thỏa mãn ràng buộc: Backtracking, Backtracking with Forward Checking, Min-Conflict (đang phát triển).
+    - Reinforcement Learning: Q-Learning.
+Trong tương lai, đồ án sẽ được hoàn thiện hơn và hướng đến mô phỏng phục vụ cho giáo dục.

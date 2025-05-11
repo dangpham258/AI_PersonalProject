@@ -682,7 +682,7 @@ class PuzzleSolver:
             if ui:
                 ui.update_status(f"Backtracking: Step {steps}")
                 ui.update_board_from_assignment(assign)
-                time.sleep(0.5)  # Pause to allow user to observe
+                time.sleep(0.00000000000001)  
             if len(assign) == 9:
                 state = [[assign[(i,j)] for j in range(3)] for i in range(3)]
                 if self.is_goal_for_CSPs(state):
@@ -713,119 +713,132 @@ class PuzzleSolver:
 
         solution = backtrack(assignment)
         if solution is None and ui:
-            ui.update_status("No solution found.")
+            ui.update_status("No solution found")
         return solution, steps
 
     def forward_checking(self, initial_state, ui=None):
-        if not isinstance(initial_state, list) or not all(isinstance(row, list) for row in initial_state):
+        # Validate initial_state
+        if not isinstance(initial_state, list) or any(len(row) != 3 for row in initial_state) or len(initial_state) != 3:
             raise ValueError("initial_state must be a 3x3 matrix")
-        if len(initial_state) != 3 or any(len(row) != 3 for row in initial_state):
-            raise ValueError("initial_state must be 3x3")
 
         variables = [(i, j) for i in range(3) for j in range(3)]
-        domains = {}
+        domains = {v: list(range(9)) for v in variables}
         assignment = {}
-        for i, j in variables:
-            if initial_state[i][j] == 0:
-                domains[(i, j)] = list(range(1, 10))  # Assuming values from 1-9
-            else:
-                val = initial_state[i][j]
-                domains[(i, j)] = [val]
-                assignment[(i, j)] = val
-
         steps = 0
+        states_explored = 1
+        start_time = time.time()
 
-        def inference(var, val, doms, assign):
-            inf = {}
-            if ui:
-                ui.update_status(f"Forward checking for {var} with value {val}")
+        # Initialize domains and assignment from initial_state
+        for (i, j) in variables:
+            val = initial_state[i][j]
+            if val != 0:
+                assignment[(i, j)] = val
+                domains[(i, j)] = [val]
+
+        def is_consistent(var, val, assign):
+            temp = [[assign.get((x, y), 0) for y in range(3)] for x in range(3)]
+            temp[var[0]][var[1]] = val
+            vals = [temp[x][y] for x in range(3) for y in range(3) if temp[x][y] != 0]
+            if len(vals) != len(set(vals)):
+                return False
+            blank_count = sum(1 for x in range(3) for y in range(3) if temp[x][y] == 0)
+            return blank_count == 1
+
+        def inference(var, val, doms):
+            removed = {}
             for other in doms:
-                if other in assign or other == var:
+                if other == var or other in assignment:
                     continue
                 if val in doms[other]:
                     doms[other].remove(val)
-                    inf.setdefault(other, []).append(val)
-                    if ui:
-                        ui.update_status(f"Removed {val} from domain of {other}: {doms[other]}")
+                    removed.setdefault(other, []).append(val)
                     if not doms[other]:
-                        if ui:
-                            ui.update_status(f"Domain of {other} is empty, failure!")
-                        return 'failure'
-            return inf
+                        return None  # failure
+            return removed
 
-        def undo(inf, doms):
-            for v, lst in inf.items():
-                doms[v].extend(lst)
-                if ui:
-                    ui.update_status(f"Restored domain for {v}: {doms[v]}")
+        def undo(removed, doms):
+            for v, vals in removed.items():
+                doms[v].extend(vals)
 
         def backtrack(assign, doms):
-            nonlocal steps
+            nonlocal steps, states_explored
             steps += 1
-            if ui:
-                ui.update_status(f"Forward Checking: Step {steps}")
-                ui.update_board_from_assignment(assign)
-                time.sleep(0.5)  # Pause to allow user to observe
+            # Check for complete assignment
             if len(assign) == 9:
-                state = [[assign.get((i, j), 0) for j in range(3)] for i in range(3)]
-                if self.is_goal_for_CSPs(state):
-                    if ui:
-                        ui.update_status("Solution found!")
-                    return state
-                else:
-                    if ui:
-                        ui.update_status("Assignment does not satisfy goal, backtracking...")
-                    return None
+                # Reconstruct final board
+                final = [[assign[(i, j)] for j in range(3)] for i in range(3)]
+                return final
 
-            var = min((v for v in doms if v not in assign), key=lambda x: len(doms[x]))
-            for val in sorted(doms[var], key=lambda v: self.manhattan_distance(
-                    [[assign.get((i, j), v if (i, j) == var else 0) for j in range(3)] for i in range(3)])):
-                assign[var] = val
-                inf = inference(var, val, doms, assign)
-                if inf != 'failure':
-                    result = backtrack(assign, doms)
-                    if result is not None:
-                        return result
-                    undo(inf, doms)
-                    if ui:
-                        ui.update_status(f"Backtracking from {var} with {val}, restoring domains")
-                else:
-                    if ui:
-                        ui.update_status(f"Forward checking failed for {var} with {val}")
-                del assign[var]
-                if ui:
-                    ui.update_status(f"Removed assignment {val} from {var}")
-            if ui:
-                ui.update_status(f"No suitable value for {var}, backtracking...")
+            # Select unassigned variable with minimum remaining values
+            var = min((v for v in doms if v not in assign), key=lambda v: len(doms[v]), default=None)
+            if var is None:
+                return None
+
+            for val in list(doms[var]):
+                if is_consistent(var, val, assign):
+                    assign[var] = val
+                    removed = inference(var, val, doms)
+                    states_explored += 1
+                    if removed is not None:
+                        result = backtrack(assign, doms)
+                        if result is not None:
+                            return result
+                        undo(removed, doms)
+                    del assign[var]
             return None
 
         solution = backtrack(assignment, domains)
-        if solution is None and ui:
-            ui.update_status("No solution found.")
-        return solution, steps
-
-    def conflicts(self, state, pos, val):
-        r,c = pos
-        temp = copy.deepcopy(state)
-        temp[r][c] = val
-        rv = [x for x in temp[r] if x]
-        cv = [temp[i][c] for i in range(3) if temp[i][c]]
-        dup = (len(rv)-len(set(rv))) + (len(cv)-len(set(cv)))
-        return dup + self.manhattan_distance(temp)
+        elapsed = time.time() - start_time
+        if solution is None:
+            return None, (states_explored, 0, elapsed)
+        else:
+            # Wrap as a path of length 1
+            return [initial_state, solution], (states_explored, 1, elapsed)
 
     def min_conflicts(self, initial_state, max_steps=1000):
-        curr = copy.deepcopy(initial_state)
-        vars = [(i,j) for i in range(3) for j in range(3)]
-        domains = {v: list(range(1,9)) for v in vars if initial_state[v[0]][v[1]]==0}
+        current = copy.deepcopy(initial_state)
+        variables = [(i, j) for i in range(3) for j in range(3)]
+        domains = {}
+        for v in variables:
+            if initial_state[v[0]][v[1]] == 0:
+                domains[v] = list(range(1, 9))
+            else:
+                domains[v] = [initial_state[v[0]][v[1]]]
+
+        def conflict_count(state, pos, val):
+            r, c = pos
+            tmp = copy.deepcopy(state)
+            tmp[r][c] = val
+            vals = [tmp[x][y] for x in range(3) for y in range(3) if tmp[x][y] != 0]
+            duplicates = len(vals) - len(set(vals))
+            blank_count = sum(1 for x in range(3) for y in range(3) if tmp[x][y] == 0)
+            return duplicates + abs(blank_count - 1)
+
+        steps = 0
+        states_explored = 1
+        start_time = time.time()
 
         for step in range(max_steps):
-            if self.is_goal_for_CSPs(curr):
-                return curr, step
-            conflicted = [v for v in vars if curr[v[0]][v[1]]!=0 and self.conflicts(curr, v, curr[v[0]][v[1]])>0]
+            steps += 1
+            # Check goal
+            if self.is_goal_for_CSPs(current):
+                elapsed = time.time() - start_time
+                return [current], (states_explored, steps, elapsed)
+
+            # Find conflicted variables
+            conflicted = [v for v in variables
+                          if current[v[0]][v[1]] != 0 and conflict_count(current, v, current[v[0]][v[1]]) > 0]
+            if not conflicted:
+                conflicted = [v for v in variables if current[v[0]][v[1]] == 0]
+
             var = random.choice(conflicted)
-            best = min(domains.get(var,[]), key=lambda x: self.conflicts(curr,var,x))
-            curr[var[0]][var[1]] = best
-        return None, max_steps
+            # Choose value minimizing conflicts
+            best_val = min(domains[var], key=lambda val: conflict_count(current, var, val))
+            current[var[0]][var[1]] = best_val
+            states_explored += 1
+
+        elapsed = time.time() - start_time
+        return None, (states_explored, steps, elapsed)
 
     def q_learning(self, initial_state):
         Q_table = defaultdict(lambda: [0, 0, 0, 0])

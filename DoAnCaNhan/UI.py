@@ -315,8 +315,12 @@ class EightPuzzle:
         finally:
             self.solving = False
             if self.timer_job:
-                self.root.after_cancel(self.timer_job)
-                self.timer_job = None
+                self.root.after(0, self.cancel_timer)
+
+    def cancel_timer(self):
+        if self.timer_job:
+            self.root.after_cancel(self.timer_job)
+            self.timer_job = None
 
     def update_timer(self):
         if self.solving:
