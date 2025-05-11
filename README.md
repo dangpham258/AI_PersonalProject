@@ -329,11 +329,11 @@ $Q(s,a) ← Q(s,a) + \alpha[r+ \gamma Q(s', a') − Q(s,a)]$
 $loss = (r + \gamma * max(Q_target(s'), a') - Q(s, a))^2$
 
 ## 3. KẾT LUẬN
-Đồ án đã tổng hợp và mô phỏng gần như đầy đủ các thuật toán tìm kiếm:
+- Đồ án đã tổng hợp và mô phỏng gần như đầy đủ các thuật toán tìm kiếm:
   - Tìm kiếm mù: BFS, DFS, IDS, UCS.
   - Tìm kiếm có thông tin: Greedy, A*, IDA*.
   - Tìm kiếm cục bộ: Simple hill Climbing, Steepest-Ascent hill-climbing, Stochastic hill Climbing, Simulated Annealing, Beam Search, Genetic Algorithms.
   - Tìm kiếm trong môi trường phức tạp: Search in Nondeterministic, Search with No Observation, Partially Observable Search.
   - Tìm kiếm thỏa mãn ràng buộc: Backtracking, Backtracking with Forward Checking, Min-Conflict (đang phát triển).
   - Reinforcement Learning: Q-Learning.
-Trong tương lai, đồ án sẽ được hoàn thiện hơn và hướng đến mô phỏng phục vụ cho giáo dục.
+- Trong tương lai, đồ án sẽ được hoàn thiện hơn và hướng đến mô phỏng phục vụ cho giáo dục.
