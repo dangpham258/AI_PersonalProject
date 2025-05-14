@@ -5,6 +5,9 @@ import heapq
 from collections import deque
 import math
 import time
+from heapq import heappush, heappop
+from itertools import count
+
 
 class PuzzleSolver:
     def __init__(self, goal_state):
@@ -84,7 +87,7 @@ class PuzzleSolver:
         return None, (len(visited), 0, elapsed_time)
 
     def iddfs(self, initial_state, max_depth):
-        def dls(state, path, depth, visited):
+        def dfs(state, path, depth, visited):
             if depth < 0:
                 return None
             if self.is_goal(state):
@@ -93,7 +96,7 @@ class PuzzleSolver:
             for neighbor in self.get_neighbor(state):
                 neighbor_str = str(neighbor)
                 if neighbor_str not in visited:
-                    result = dls(neighbor, path + [state], depth - 1, visited)
+                    result = dfs(neighbor, path + [state], depth - 1, visited)
                     if result is not None:
                         return result
             return None
@@ -102,7 +105,7 @@ class PuzzleSolver:
         start_time = time.time()
         for depth in range(max_depth + 1):
             visited = set()
-            result = dls(initial_state, [], depth, visited)
+            result = dfs(initial_state, [], depth, visited)
             total_visited.update(visited)
             if result is not None:
                 elapsed_time = time.time() - start_time
@@ -171,6 +174,7 @@ class PuzzleSolver:
     def idastar_search(self, initial_state):
         def search(path, g, threshold):
             state = path[-1]
+            visited.add(str(state))
             f = g + self.manhattan_distance(state)
             if f > threshold:
                 return f, None
@@ -194,7 +198,6 @@ class PuzzleSolver:
         start_time = time.time()
         while True:
             t, result = search(path, 0, threshold)
-            visited.add(str(path[-1]))
             if result is not None:
                 elapsed_time = time.time() - start_time
                 return result, (len(visited), len(result) - 1, elapsed_time)
@@ -503,51 +506,77 @@ class PuzzleSolver:
         return None, (len(visited), len(best_path) - 1 if best_path else 0, elapsed_time)
 
     def nondeterministic_search(self, initial_state):
-        max_depth = 20
-        visited = {str(initial_state)}
+        max_depth = 50
         state_count = 1
         start_time = time.time()
+        global_visited = {str(initial_state)}
 
-        def dfs_and(state, depth, path):
-            nonlocal state_count
+        def manhattan_distance_after_move(state, direction):
+            blank_row, blank_col = self.find_blank(state)
+            dr, dc = direction
+            new_row, new_col = blank_row + dr, blank_col + dc
+            if not (0 <= new_row < 3 and 0 <= new_col < 3):
+                return float('inf')
+            new_state = copy.deepcopy(state)
+            new_state[blank_row][blank_col], new_state[new_row][new_col] = new_state[new_row][new_col], new_state[blank_row][blank_col]
+            return self.manhattan_distance(new_state)
+
+        def dfs_and(state, depth, path, local_visited, current_cost):
+            nonlocal state_count, global_visited
             if depth > max_depth:
                 return None
             if self.is_goal(state):
                 return path + [state]
+
             blank_row, blank_col = self.find_blank(state)
             directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            directions.sort(key=lambda d: manhattan_distance_after_move(state, d))
+
             for dr, dc in directions:
                 new_row, new_col = blank_row + dr, blank_col + dc
                 if not (0 <= new_row < 3 and 0 <= new_col < 3):
                     continue
+
                 possible_outcomes = []
+                local_copy = set(local_visited)
+
+                # Outcome 1: Di chuyển thành công
                 outcome1 = copy.deepcopy(state)
                 outcome1[blank_row][blank_col], outcome1[new_row][new_col] = outcome1[new_row][new_col], outcome1[blank_row][blank_col]
                 outcome1_str = str(outcome1)
-                if outcome1_str not in visited:
-                    visited.add(outcome1_str)
+                if outcome1_str not in global_visited:
+                    global_visited.add(outcome1_str)
+                    local_copy.add(outcome1_str)
                     state_count += 1
-                    possible_outcomes.append(outcome1)
-                outcome2 = copy.deepcopy(state)
+                    possible_outcomes.append((outcome1, local_copy))
+
+                # Outcome 2: Đứng im
+                outcome2 = state  # Không cần copy vì trạng thái không thay đổi
                 outcome2_str = str(outcome2)
-                if outcome2_str not in visited:
-                    visited.add(outcome2_str)
+                if outcome2_str not in global_visited:
+                    global_visited.add(outcome2_str)
+                    local_copy.add(outcome2_str)
                     state_count += 1
-                    possible_outcomes.append(outcome2)
+                    possible_outcomes.append((outcome2, local_copy))
+
                 if possible_outcomes:
                     all_paths = []
                     valid_for_all = True
-                    for outcome in possible_outcomes:
-                        result = dfs_and(outcome, depth + 1, path + [state])
+                    for outcome, new_local_visited in possible_outcomes:
+                        heuristic_cost = self.manhattan_distance(outcome)
+                        if current_cost + heuristic_cost > 100:
+                            valid_for_all = False
+                            break
+                        result = dfs_and(outcome, depth + 1, path + [state], new_local_visited, current_cost + 1)
                         if result is None:
                             valid_for_all = False
                             break
                         all_paths.append(result)
                     if valid_for_all and all_paths:
-                        return all_paths[0]
+                        return min(all_paths, key=len)
             return None
 
-        result = dfs_and(initial_state, 0, [])
+        result = dfs_and(initial_state, 0, [], {str(initial_state)}, 0)
         elapsed_time = time.time() - start_time
         return result, (state_count, len(result) - 1 if result else 0, elapsed_time)
 
@@ -610,302 +639,390 @@ class PuzzleSolver:
         elapsed_time = time.time() - start_time
         return None, (states_explored, 0, elapsed_time)
 
-    def partially_observable_search(self, initial_state):
+    def partially_observable_search(self, initial_state, max_depth=30):
         def get_observation(state):
-            blank_row, blank_col = self.find_blank(state)
-            return (blank_row, blank_col)
+            return self.find_blank(state)
 
-        initial_observation = get_observation(initial_state)
-        belief_states = {str(initial_state): initial_state}
-        queue = deque([(belief_states, [])])
-        visited_beliefs = set()
-        max_depth = 30
+        initial_belief = {str(initial_state): initial_state}
+        start_obs = get_observation(initial_state)
+        g0 = 0
+        h0 = self.manhattan_distance(initial_state)
+        counter = count()
+        open_heap = []
+        heappush(open_heap, (g0 + h0, g0, next(counter), initial_belief, [], initial_state))
+
+        visited = set()
         states_explored = 1
         start_time = time.time()
-        while queue:
-            belief, plan = queue.popleft()
-            belief_key = frozenset(belief.keys())
-            if belief_key in visited_beliefs:
-                continue
-            visited_beliefs.add(belief_key)
-            all_goals = all(self.is_goal(state) for state in belief.values())
-            if all_goals:
-                solution_path = [initial_state]
-                current_state = initial_state
-                for action in plan:
-                    results = self.results(current_state, action)
-                    if results:
-                        current_state = results[0]
-                        solution_path.append(current_state)
-                elapsed_time = time.time() - start_time
-                return solution_path, (states_explored, len(solution_path) - 1, elapsed_time)
-            if len(plan) >= max_depth:
-                continue
-            for action in self.actions():
-                next_belief = {}
-                for state_str, state in belief.items():
-                    possible_results = self.results(state, action)
-                    states_explored += len(possible_results)
-                    for result_state in possible_results:
-                        result_str = str(result_state)
-                        if result_str not in next_belief:
-                            next_belief[result_str] = result_state
-                if next_belief:
-                    queue.append((next_belief, plan + [action]))
-        elapsed_time = time.time() - start_time
-        return None, (states_explored, 0, elapsed_time)
-    
-    def is_goal_for_CSPs(self, state):
-        for i in range(3):
-            row = [state[i][j] for j in range(3) if state[i][j] != 0]
-            col = [state[j][i] for j in range(3) if state[j][i] != 0]
-            if len(set(row)) != len(row) or len(set(col)) != len(col):
-                return False
-        return len([x for row in state for x in row if x != 0]) == 9
-    
-    def backtracking_search(self, initial_state, ui=None):
-        variables = [(i,j) for i in range(3) for j in range(3)]
-        domains = {v: list(range(9)) for v in variables}
-        assignment = {}
-        steps = 0
 
-        def is_consistent(var, val, assign):
-            temp = [[assign.get((i,j), 0) for j in range(3)] for i in range(3)]
-            r, c = var
-            temp[r][c] = val
-            vals = [temp[x][y] for x in range(3) for y in range(3) if temp[x][y] != 0]
-            return len(vals) == len(set(vals))
+        while open_heap:
+            f, g, _, belief, plan, actual = heappop(open_heap)
+            key = (frozenset(belief.keys()), len(plan))
+            if key in visited:
+                continue
+            visited.add(key)
 
-        def backtrack(assign):
-            nonlocal steps
-            steps += 1
-            if ui:
-                ui.update_status(f"Backtracking: Step {steps}")
-                ui.update_board_from_assignment(assign)
-                time.sleep(0.00000000000001)  
-            if len(assign) == 9:
-                state = [[assign[(i,j)] for j in range(3)] for i in range(3)]
-                if self.is_goal_for_CSPs(state):
-                    if ui:
-                        ui.update_status("Solution found!")
-                    return state
+            if all(self.is_goal(s) for s in belief.values()):
+                path = [initial_state]
+                curr = initial_state
+                for act in plan:
+                    res = self.results(curr, act)
+                    curr = res[0] if res else curr
+                    path.append(curr)
+                elapsed = time.time() - start_time
+                return path, (states_explored, len(path) - 1, elapsed)
+
+            if g >= max_depth:
+                continue
+
+            actions = self.actions()
+            sorted_actions = []
+            for a in actions:
+                res_actual = self.results(actual, a)
+                if res_actual:
+                    next_act = res_actual[0]
+                    score = self.manhattan_distance(next_act)
                 else:
-                    if ui:
-                        ui.update_status("Assignment does not satisfy goal, backtracking...")
+                    score = float('inf')
+                sorted_actions.append((score, a))
+            sorted_actions.sort(key=lambda x: x[0])
+
+            for _, action in sorted_actions:
+                actual_res = self.results(actual, action)
+                if not actual_res:
+                    continue
+                next_actual = actual_res[0]
+                obs = get_observation(next_actual)
+
+                next_belief = {}
+                for s in belief.values():
+                    for s2 in self.results(s, action):
+                        states_explored += 1
+                        if get_observation(s2) == obs:
+                            next_belief[str(s2)] = s2
+                if not next_belief:
+                    continue
+
+                new_plan = plan + [action]
+                new_key = (frozenset(next_belief.keys()), len(new_plan))
+                if new_key in visited:
+                    continue
+
+                g2 = g + 1
+                h2 = self.manhattan_distance(next_actual)
+                heappush(open_heap, (g2 + h2, g2, next(counter), next_belief, new_plan, next_actual))
+
+        elapsed = time.time() - start_time
+        return None, (states_explored, 0, elapsed)
+    
+    def is_solvable(self, state):
+        flat = [tile for row in state for tile in row if tile != 0]
+        inversions = 0
+        for i in range(len(flat)):
+            for j in range(i + 1, len(flat)):
+                if flat[i] > flat[j]:
+                    inversions += 1
+        return inversions % 2 == 0
+
+    def backtracking_search(self, initial_state, max_depth=50, ui=None):
+        states_explored = 0
+        
+        def backtrack(state, path, depth, visited_in_path):
+            nonlocal states_explored
+            states_explored += 1
+
+            if ui:
+                ui.update_status(f"Backtracking: Exploring depth {depth}, States explored: {states_explored}")
+                assignment = {(i, j): state[i][j] for i in range(3) for j in range(3)}
+                ui.update_board_from_assignment(assignment)
+                time.sleep(0.005)
+                if not ui.solving:
                     return None
 
-            var = next(v for v in variables if v not in assign)
-            for val in domains[var]:
-                if is_consistent(var, val, assign):
-                    assign[var] = val
-                    result = backtrack(assign)
+            if self.is_goal(state):
+                if ui:
+                    ui.update_status(f"Solution found at depth {depth}!")
+                    time.sleep(0.5)
+                return path
+
+            if depth >= max_depth or depth + self.manhattan_distance(state) > max_depth:
+                if ui:
+                    ui.update_status(f"Pruning at depth {depth}: Path too long or unreachable")
+                    time.sleep(0.005)
+                return None
+            
+            visited_in_path.add(str(state))
+            neighbors = self.get_neighbor(state)
+            random.shuffle(neighbors)
+            for neighbor in neighbors:
+                if str(neighbor) not in visited_in_path:
+                    result = backtrack(neighbor, path + [neighbor], depth + 1, visited_in_path)
                     if result is not None:
                         return result
-                    del assign[var]
                     if ui:
-                        ui.update_status(f"Backtracking from {var} with value {val}")
-                else:
-                    if ui:
-                        ui.update_status(f"{val} is not consistent with {var}")
+                        ui.update_status(f"Backtracking to depth {depth}, States explored: {states_explored}")
+                        assignment = {(i, j): state[i][j] for i in range(3) for j in range(3)}
+                        ui.update_board_from_assignment(assignment)
+                        time.sleep(0.005)
+                        if not ui.solving:
+                            return None
+            visited_in_path.remove(str(state))
+            return None
+
+        if not self.is_solvable(initial_state):
             if ui:
-                ui.update_status(f"No suitable value for {var}, backtracking...")
-            return None
-
-        solution = backtrack(assignment)
-        if solution is None and ui:
-            ui.update_status("No solution found")
-        return solution, steps
-
-    def forward_checking(self, initial_state, ui=None):
-        # Validate initial_state
-        if not isinstance(initial_state, list) or any(len(row) != 3 for row in initial_state) or len(initial_state) != 3:
-            raise ValueError("initial_state must be a 3x3 matrix")
-
-        variables = [(i, j) for i in range(3) for j in range(3)]
-        domains = {v: list(range(9)) for v in variables}
-        assignment = {}
-        steps = 0
-        states_explored = 1
+                ui.update_status("Puzzle is unsolvable!")
+                time.sleep(0.5)
+            return None, (0, 0, time.time() - time.time())
+        
+        path = [initial_state]
+        visited_in_path = set()
         start_time = time.time()
-
-        # Initialize domains and assignment from initial_state
-        for (i, j) in variables:
-            val = initial_state[i][j]
-            if val != 0:
-                assignment[(i, j)] = val
-                domains[(i, j)] = [val]
-
-        def is_consistent(var, val, assign):
-            temp = [[assign.get((x, y), 0) for y in range(3)] for x in range(3)]
-            temp[var[0]][var[1]] = val
-            vals = [temp[x][y] for x in range(3) for y in range(3) if temp[x][y] != 0]
-            if len(vals) != len(set(vals)):
-                return False
-            blank_count = sum(1 for x in range(3) for y in range(3) if temp[x][y] == 0)
-            return blank_count == 1
-
-        def inference(var, val, doms):
-            removed = {}
-            for other in doms:
-                if other == var or other in assignment:
-                    continue
-                if val in doms[other]:
-                    doms[other].remove(val)
-                    removed.setdefault(other, []).append(val)
-                    if not doms[other]:
-                        return None  # failure
-            return removed
-
-        def undo(removed, doms):
-            for v, vals in removed.items():
-                doms[v].extend(vals)
-
-        def backtrack(assign, doms):
-            nonlocal steps, states_explored
-            steps += 1
-            # Check for complete assignment
-            if len(assign) == 9:
-                # Reconstruct final board
-                final = [[assign[(i, j)] for j in range(3)] for i in range(3)]
-                return final
-
-            # Select unassigned variable with minimum remaining values
-            var = min((v for v in doms if v not in assign), key=lambda v: len(doms[v]), default=None)
-            if var is None:
-                return None
-
-            for val in list(doms[var]):
-                if is_consistent(var, val, assign):
-                    assign[var] = val
-                    removed = inference(var, val, doms)
-                    states_explored += 1
-                    if removed is not None:
-                        result = backtrack(assign, doms)
-                        if result is not None:
-                            return result
-                        undo(removed, doms)
-                    del assign[var]
-            return None
-
-        solution = backtrack(assignment, domains)
+        solution = backtrack(initial_state, path, 0, visited_in_path)
         elapsed = time.time() - start_time
+        
         if solution is None:
+            if ui:
+                ui.update_status("No solution found within depth limit")
+                time.sleep(0.005)
             return None, (states_explored, 0, elapsed)
         else:
-            # Wrap as a path of length 1
-            return [initial_state, solution], (states_explored, 1, elapsed)
+            if ui:
+                ui.update_status(f"Solution found in {states_explored} states!")
+                for step, state in enumerate(solution):
+                    assignment = {(i, j): state[i][j] for i in range(3) for j in range(3)}
+                    ui.update_board_from_assignment(assignment)
+                    ui.update_status(f"Solution step {step + 1}/{len(solution)}")
+                    time.sleep(0.05)
+            return solution, (states_explored, len(solution) - 1, elapsed)
+    
+    def forward_checking(self, initial_state, max_depth=50, ui=None):
+        states_explored = 0
+        
+        def forward_check(state, depth):
+            remaining_steps = max_depth - depth
+            return self.manhattan_distance(state) <= remaining_steps
+        
+        def backtrack(state, path, depth, visited_in_path):
+            nonlocal states_explored
+            states_explored += 1
+            
+            if ui:
+                ui.update_status(f"Forward Checking: Exploring depth {depth}, States explored: {states_explored}")
+                assignment = {(i, j): state[i][j] for i in range(3) for j in range(3)}
+                ui.update_board_from_assignment(assignment)
+                time.sleep(0.005)
+                if not ui.solving:
+                    return None
 
-    def min_conflicts(self, initial_state, max_steps=1000):
-        current = copy.deepcopy(initial_state)
-        variables = [(i, j) for i in range(3) for j in range(3)]
-        domains = {}
-        for v in variables:
-            if initial_state[v[0]][v[1]] == 0:
-                domains[v] = list(range(1, 9))
-            else:
-                domains[v] = [initial_state[v[0]][v[1]]]
+            if self.is_goal(state):
+                if ui:
+                    ui.update_status(f"Solution found at depth {depth}!")
+                    time.sleep(0.5)
+                return path
 
-        def conflict_count(state, pos, val):
-            r, c = pos
-            tmp = copy.deepcopy(state)
-            tmp[r][c] = val
-            vals = [tmp[x][y] for x in range(3) for y in range(3) if tmp[x][y] != 0]
-            duplicates = len(vals) - len(set(vals))
-            blank_count = sum(1 for x in range(3) for y in range(3) if tmp[x][y] == 0)
-            return duplicates + abs(blank_count - 1)
+            if depth >= max_depth or not forward_check(state, depth):
+                if ui:
+                    ui.update_status(f"Pruning at depth {depth}: Unreachable or too deep")
+                    time.sleep(0.005)
+                return None
+            
+            visited_in_path.add(str(state))
+            neighbors = self.get_neighbor(state)
+            neighbors.sort(key=self.manhattan_distance)
+            for neighbor in neighbors:
+                if str(neighbor) not in visited_in_path:
+                    result = backtrack(neighbor, path + [neighbor], depth + 1, visited_in_path)
+                    if result is not None:
+                        return result
+                    if ui:
+                        ui.update_status(f"Backtracking to depth {depth}, States explored: {states_explored}")
+                        assignment = {(i, j): state[i][j] for i in range(3) for j in range(3)}
+                        ui.update_board_from_assignment(assignment)
+                        time.sleep(0.005)
+                        if not ui.solving:
+                            return None
+            visited_in_path.remove(str(state))
+            return None
 
+        if not self.is_solvable(initial_state):
+            if ui:
+                ui.update_status("Puzzle is unsolvable!")
+                time.sleep(0.5)
+            return None, (0, 0, time.time() - time.time())
+        
+        path = [initial_state]
+        visited_in_path = set()
+        start_time = time.time()
+        solution = backtrack(initial_state, path, 0, visited_in_path)
+        elapsed = time.time() - start_time
+        
+        if solution is None:
+            if ui:
+                ui.update_status("No solution found within depth limit")
+                time.sleep(0.005)
+            return None, (states_explored, 0, elapsed)
+        else:
+            if ui:
+                ui.update_status(f"Solution found in {states_explored} states!")
+                for step, state in enumerate(solution):
+                    assignment = {(i, j): state[i][j] for i in range(3) for j in range(3)}
+                    ui.update_board_from_assignment(assignment)
+                    ui.update_status(f"Solution step {step + 1}/{len(solution)}")
+                    time.sleep(0.05)
+            return solution, (states_explored, len(solution) - 1, elapsed)
+
+    def min_conflicts(self, initial_state, max_steps=1000, ui=None):
+        current_state = copy.deepcopy(initial_state)
+        path = [current_state]
+        visited = {str(current_state)}
         steps = 0
         states_explored = 1
         start_time = time.time()
 
-        for step in range(max_steps):
+        def conflicts(state):
+            return self.manhattan_distance(state)
+
+        while steps < max_steps:
             steps += 1
-            # Check goal
-            if self.is_goal_for_CSPs(current):
+
+            if ui:
+                ui.update_status(f"Min-Conflicts: Step {steps}, Manhattan Distance: {conflicts(current_state)}")
+                assignment = {(i, j): current_state[i][j] for i in range(3) for j in range(3)}
+                ui.update_board_from_assignment(assignment)
+                time.sleep(0.01)
+                if not ui.solving:
+                    elapsed = time.time() - start_time
+                    return None, (states_explored, len(path) - 1, elapsed)
+
+            if self.is_goal(current_state):
+                if ui:
+                    ui.update_status("Solution found!")
                 elapsed = time.time() - start_time
-                return [current], (states_explored, steps, elapsed)
+                return path, (states_explored, len(path) - 1, elapsed)
 
-            # Find conflicted variables
-            conflicted = [v for v in variables
-                          if current[v[0]][v[1]] != 0 and conflict_count(current, v, current[v[0]][v[1]]) > 0]
-            if not conflicted:
-                conflicted = [v for v in variables if current[v[0]][v[1]] == 0]
+            neighbors = self.get_neighbor(current_state)
+            valid_neighbors = [(n, conflicts(n)) for n in neighbors if str(n) not in visited]
+            if not valid_neighbors:
+                neighbors = self.get_neighbor(current_state)
+                current_state = random.choice(neighbors)
+                path.append(current_state)
+                visited.add(str(current_state))
+                states_explored += 1
+                continue
 
-            var = random.choice(conflicted)
-            # Choose value minimizing conflicts
-            best_val = min(domains[var], key=lambda val: conflict_count(current, var, val))
-            current[var[0]][var[1]] = best_val
+            min_conflict_state = min(valid_neighbors, key=lambda x: x[1])[0]
+            current_state = min_conflict_state
+            path.append(current_state)
+            visited.add(str(current_state))
             states_explored += 1
 
         elapsed = time.time() - start_time
-        return None, (states_explored, steps, elapsed)
+        if ui:
+            ui.update_status("No solution found after maximum steps")
+        return None, (states_explored, len(path) - 1, elapsed)
 
     def q_learning(self, initial_state):
         Q_table = defaultdict(lambda: [0, 0, 0, 0])
-        alpha = 0.1     # learning rate
-        gamma = 0.9     # discount factor
+        alpha = 0.1                   # learning rate
+        gamma = 0.9                   # discount factor
         epsilon_start = 1.0
         epsilon_end = 0.1
-        total_episodes = 1000
+        total_episodes = 50000       
         max_steps = 100
         start_time = time.time()
 
         for episode in range(total_episodes):
             state = self.generate_random_state()
             state_tuple = tuple(map(tuple, state))
-            epsilon = max(epsilon_end, epsilon_start - (epsilon_start - epsilon_end) * episode / total_episodes)
+
+            epsilon = max(
+                epsilon_end,
+                epsilon_start - (epsilon_start - epsilon_end) * episode / total_episodes
+            )
 
             for step in range(max_steps):
                 possible_actions = self.get_possible_actions(state)
+
                 if random.random() < epsilon:
                     action = random.choice(possible_actions)
                 else:
-                    q_values = [Q_table[state_tuple][a] for a in possible_actions]
-                    max_q = max(q_values)
-                    best_actions = [a for a, q in zip(possible_actions, q_values) if q == max_q]
-                    action = random.choice(best_actions)
+                    q_vals = Q_table[state_tuple]
+                    best_actions = sorted(
+                        possible_actions,
+                        key=lambda a: q_vals[a] + random.random() * 1e-5,
+                        reverse=True
+                    )
+                    action = best_actions[0]
 
-                next_state = self.results(state, action)[0]
-                reward = 100 if self.is_goal(next_state) else -1
-                next_state_tuple = tuple(map(tuple, next_state))
+                next_states = self.results(state, action)
+                assert len(next_states) == 1, "Expected deterministic result"
+                next_state = next_states[0]
+                next_tuple = tuple(map(tuple, next_state))
+
+                if self.is_goal(next_state):
+                    reward = 100
+                else:
+                    reward = -self.manhattan_distance(next_state)
 
                 if self.is_goal(next_state):
                     target = reward
                 else:
-                    next_possible_actions = self.get_possible_actions(next_state)
-                    max_q_next = max(Q_table[next_state_tuple][a] for a in next_possible_actions) if next_possible_actions else 0
+                    future_actions = self.get_possible_actions(next_state)
+                    if future_actions:
+                        max_q_next = max(Q_table[next_tuple][a] for a in future_actions)
+                    else:
+                        max_q_next = 0
                     target = reward + gamma * max_q_next
 
                 Q_table[state_tuple][action] += alpha * (target - Q_table[state_tuple][action])
-                state = next_state
-                state_tuple = next_state_tuple
+
+                state, state_tuple = next_state, next_tuple
+
                 if self.is_goal(state):
                     break
 
         state = initial_state
         path = [state]
-        max_path_length = 100
-        for _ in range(max_path_length):
+        visited = {tuple(map(tuple, state))}
+
+        for _ in range(100):
             if self.is_goal(state):
                 break
+
             state_tuple = tuple(map(tuple, state))
             possible_actions = self.get_possible_actions(state)
-            if possible_actions:
-                q_values = [Q_table[state_tuple][a] for a in possible_actions]
-                max_q = max(q_values)
-                best_actions = [a for a, q in zip(possible_actions, q_values) if q == max_q]
-                action = random.choice(best_actions)
-                next_state = self.results(state, action)[0]
-                path.append(next_state)
-                state = next_state
-            else:
+            if not possible_actions:
                 break
-        else:
+
+            q_vals = Q_table[state_tuple]
+            best_actions = sorted(
+                possible_actions,
+                key=lambda a: q_vals[a],
+                reverse=True
+            )
+            action = best_actions[0]
+
+            next_states = self.results(state, action)
+            assert len(next_states) == 1
+            next_state = next_states[0]
+            next_tuple = tuple(map(tuple, next_state))
+
+            if next_tuple in visited:
+                break
+
+            path.append(next_state)
+            visited.add(next_tuple)
+            state = next_state
+
+        if not self.is_goal(state):
             path = None
 
         elapsed_time = time.time() - start_time
         states_explored = len(Q_table)
-        return path, (states_explored, len(path) - 1 if path else 0, elapsed_time)
+        solution_length = len(path) - 1 if path else 0
+
+        return path, (states_explored, solution_length, elapsed_time)
 
     def get_possible_actions(self, state):
         row, col = self.find_blank(state)

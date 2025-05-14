@@ -10,7 +10,7 @@
   - [2.4. Các thuật toán Tìm kiếm trong môi trường phức tạp (Complex Environment)](#24-các-thuật-toán-tìm-kiếm-trong-môi-trường-phức-tạp-complex-environment)
   - [2.5. Các thuật toán Tìm kiếm thỏa mãn ràng buộc (Constraint Satisfaction Problem)](#25-các-thuật-toán-tìm-kiếm-thỏa-mãn-ràng-buộc-constraint-satisfaction-problem)
   - [2.6. Các thuật toán Tìm kiếm học tăng cường (Reinforcement Learning)](#26-các-thuật-toán-tìm-kiếm-học-tăng-cường-reinforcement-learning)
-- [3. KẾT LUẬN](#3-kết-luận)
+- [3. Kết luận](#3-kết-luận)
 
 ## 1. Mục tiêu
 
@@ -47,6 +47,7 @@
 - Open List: Ngăn xếp.
 - Độ phức tạp thời gian: $T(n)= 1+ n^2 + n^3 +...+ n^m =O(n^m)$
 - Độ phức tạp không gian: $O(bm)$
+
 <div style="text-align: center;">
   <img src="PicsAndGif/DFS.gif" width="300"/>
 </div>
@@ -73,9 +74,7 @@
 </div>
 
 ##### So sánh các thuật toán trong nhóm
-<div style="text-align: center;">
-  <img src="PicsAndGif/CompareUninformedSearch.png"/>
-</div>
+![Comparison](PicsAndGif/CompareUninformedSearch.png)
 
 #### 2.2. Các thuật toán Tìm kiếm có thông tin (Informed Search Algorithms)
 
@@ -104,7 +103,7 @@
 - Độ phức tạp tính toán và yêu cầu bộ nhớ của A* đều là $O(b^m)$
 
 <div style="text-align: center;">
-  <img src="PicsAndGif/Astar.gif" width="300"/>
+  <img src="PicsAndGif/AStar.gif" width="300"/>
 </div>
 
 ##### IDA* Search:
@@ -121,9 +120,7 @@
 </div>
 
 ##### So sánh các thuật toán trong nhóm
-<div style="text-align: center;">
-  <img src="PicsAndGif/CompareInformedSearch.png"/>
-</div>
+![Comparison](PicsAndGif/CompareInformedSearch.png)
 
 #### 2.3. Các thuật toán Tìm kiếm cục bộ (Local Search Algorithms)
 
@@ -146,7 +143,7 @@ Chỉ kiểm tra từng trạng thái lận cận của nó và nếu nó tìm t
   <img src="PicsAndGif/SimpleHillClimbing.gif" width="300"/>
 </div>
 
-##### Leo đồi dốc nhất (Steepest-Ascent hill-climbing)
+##### Leo đồi dốc nhất (Steepest-Ascent Hill Climbing)
 Thuật toán này kiểm tra tất cả các nút lân cận của trạng thái hiện tại và chọn một nút lân cận gần nhất với trạng thái mục tiêu.
 
 - BƯỚC 1: Chọn trạng thái hiện tại.
@@ -160,15 +157,13 @@ Thuật toán này kiểm tra tất cả các nút lân cận của trạng thá
   <img src="PicsAndGif/SteepestHillClimbing.gif" width="300"/>
 </div>
 
-##### Leo đồi ngẫu nhiên (Stochastic hill Climbing)
+##### Leo đồi ngẫu nhiên (Stochastic Hill Climbing)
 Lựa chọn ngẫu nhiên một hàng xóm. Nếu hàng xóm đó tốt hơn trạng thái hiện tại, hàng xóm đó sẽ được chọn làm trạng thái hiện tại và thuật toán lặp lại. Ngược lại, nếu hàng xóm được chọn không tốt hơn, thuật toán sẽ chọn ngẫu nhiên một hàng xóm khác và so sánh. Thuật toán kết thúc và trả lại trạng thái hiện tại khi đã hết “kiên nhẫn” (vượt ngưỡng).
 
 - BƯỚC 1: Chọn trạng thái hiện tại.
 - BƯỚC 2: Tạo tất cả các trạng thái lân cận của trạng thái hiện tại.
 - BƯỚC 3: Đánh giá hàm mục tiêu tại tất cả các lân cận.
-- BƯỚC 4: Nếu hàm mục tiêu tại trạng thái hiện tại có giá trị cao hơn tất cả các trạng thái lân cận, thì trạng thái hiện tại đã là giá trị tối đa: KẾT THÚC TÌM KIẾM và nhảy đến BƯỚC 6. Nếu
-không, lân cận có cải thiện cao nhất của hàm mục tiêu sẽ trở
-thành trạng thái hiện tại.
+- BƯỚC 4: Nếu hàm mục tiêu tại trạng thái hiện tại có giá trị cao hơn tất cả các trạng thái lân cận, thì trạng thái hiện tại đã là giá trị tối đa: KẾT THÚC TÌM KIẾM và nhảy đến BƯỚC 6. Nếu không, lân cận có cải thiện cao nhất của hàm mục tiêu sẽ trở thành trạng thái hiện tại.
 - BƯỚC 5: Lặp lại BƯỚC 2-BƯỚC 4 trong n lần lặp.
 - BƯỚC 6: Trả về trạng thái hiện tại và giá trị hàm mục tiêu của nó.
 
@@ -198,9 +193,7 @@ Lấy cảm hứng từ di truyền học: khởi tạo quần thể, chọn l�
 </div>
 
 ##### So sánh các thuật toán trong nhóm
-<div style="text-align: center;">
-  <img src="PicsAndGif/CompareLocalSearch.png"/>
-</div>
+![Comparison](PicsAndGif/CompareLocalSearch.png)
 
 - **Chú thích**:
     - SH: Stochastic Hill Climbing
@@ -246,9 +239,11 @@ Lấy cảm hứng từ di truyền học: khởi tạo quần thể, chọn l�
 </div>
 
 ##### So sánh các thuật toán trong nhóm
-<div style="text-align: center;">
-  <img src="PicsAndGif/CompareComplexEnvSearch.png"/>
-</div>
+![Comparison](PicsAndGif/CompareComplexEnvSearch.png)
+
+- **Chú thích**:
+    - NO: No Observation
+    - PO: Partially Observable
 
 #### 2.5. Các thuật toán Tìm kiếm thỏa mãn ràng buộc (Constraint Satisfaction Problem)
 
@@ -277,6 +272,10 @@ $\to$ Bài toán ràng buộc (CSP) là dạng bài toán trong đó mỗi biế
 - Độ phức tạp thời gian: $O(nd^2)$
 - Độ phức tạp không gian: $O(nd)$
 
+<div style="text-align: center;">
+  <img src="PicsAndGif/Forward_Checking.gif" width="300"/>
+</div>
+
 ##### Min-Conflict
 - Bắt đầu từ một gán ngẫu nhiên, sau đó lặp lại: 
     - Chọn biến vi phạm ràng buộc.
@@ -285,7 +284,16 @@ $\to$ Bài toán ràng buộc (CSP) là dạng bài toán trong đó mỗi biế
 - Độ phức tạp thời gian: $O(n)$
 - Độ phức tạp không gian: $O(n)$
 
-$\to$ Nhóm thuật toán này trong đồ án hiện đang phát triển.
+<div style="text-align: center;">
+  <img src="PicsAndGif/Min_Conflict.gif" width="300"/>
+</div>
+
+##### So sánh các thuật toán trong nhóm
+![Comparison](PicsAndGif/CompareCSPs.png)
+
+- **Chú thích**:
+    - MC: Min-Conflict
+    - FC: Backtracking with Forward Checking
 
 #### 2.6. Các thuật toán Tìm kiếm học tăng cường (Reinforcement Learning)
 
@@ -308,10 +316,8 @@ $\to$ Nhóm thuật toán này trong đồ án hiện đang phát triển.
 - Công thức cập nhật (phương trình Bellman): 
 $Q(s,a) ← Q(s,a) + \alpha[r+ \gamma maxQ(s', a') − Q(s,a)]$
 
-$\to$ Đây là thuật toán không phù hợp để giải bài toán 8-Puzzle.
-
 <div style="text-align: center;">
-  <img src="PicsAndGif/Q_Learning.gif" width="500"/>
+  <img src="PicsAndGif/Q_Learning.gif" width="300"/>
 </div>
 
 ##### SARSA
@@ -328,12 +334,12 @@ $Q(s,a) ← Q(s,a) + \alpha[r+ \gamma Q(s', a') − Q(s,a)]$
 - Công thức cập nhật:
 $loss = (r + \gamma * max(Q_target(s'), a') - Q(s, a))^2$
 
-## 3. KẾT LUẬN
-- Đồ án đã tổng hợp và mô phỏng gần như đầy đủ các thuật toán tìm kiếm:
-  - Tìm kiếm mù: BFS, DFS, IDS, UCS.
-  - Tìm kiếm có thông tin: Greedy, A*, IDA*.
-  - Tìm kiếm cục bộ: Simple hill Climbing, Steepest-Ascent hill-climbing, Stochastic hill Climbing, Simulated Annealing, Beam Search, Genetic Algorithms.
-  - Tìm kiếm trong môi trường phức tạp: Search in Nondeterministic, Search with No Observation, Partially Observable Search.
-  - Tìm kiếm thỏa mãn ràng buộc: Backtracking, Backtracking with Forward Checking, Min-Conflict (đang phát triển).
-  - Reinforcement Learning: Q-Learning.
-- Trong tương lai, đồ án sẽ được hoàn thiện hơn và hướng đến mô phỏng phục vụ cho giáo dục.
+## 3. Kết luận
+- Đồ án đã tổng hợp gần như đầy đủ các nhóm thuật toán tìm kiếm và chi tiết từng thuật toán trong nhóm. Cụ thể là:
+  - Tìm kiếm mù (Uninformed Search): BFS, DFS IDS, UCS.
+  - Tìm kiếm có thông tin (Informed Search): Greedy, A*, IDA*.
+  - Tìm kiếm cục bộ (Local Search): Simple Hill Climbing, Steepest Hill Climbing, Stochastic Hill Climbing, Simulated Annealing, Beam Search, Genetic Algorithms.
+  - Tìm kiếm trong môi trường phức tạp: Search in Nondeterministic Environment, Search with No Observation, Search with Partially Observable Environment.
+  - Tìm kiếm thỏa mãn ràng buộc (CSPs): Backtracking, Backtracking with Forward Checking, Min-Conflict.
+  - Học tăng cường (Reinforcement Learning): Q-Learning.
+- Hiện tại, đồ án còn khá ít chức năng và một số giải thuật còn phần nhỏ thiếu sót. Trong tương lai, đồ án sẽ được cải thiện và hoàn thiện hơn, hướng đến phục vụ cho giáo dục về Trí tuệ nhân tạo (AI).

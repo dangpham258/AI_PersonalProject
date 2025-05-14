@@ -35,7 +35,7 @@ class EightPuzzle:
         self.last_random_state = None
         self.performance_data = {}
         
-        # Initialize visualizer
+        # Initialize visualizer of Graph.py
         self.visualizer = PuzzleVisualizer(self.root)
 
         self.setup_ui()
@@ -254,7 +254,13 @@ class EightPuzzle:
 
     def reset_to_last_random(self):
         if self.solving:
-            return
+            self.solving = False
+            self.update_status("Stopping algorithm...")
+            self.root.after(100, self.complete_reset_to_random)
+        else:
+            self.complete_reset_to_random()
+
+    def complete_reset_to_random(self):
         if self.last_random_state is None:
             self.status_var.set("No random state generated yet")
             return
@@ -263,6 +269,14 @@ class EightPuzzle:
         self.reset_solution()
 
     def reset(self):
+        if self.solving:
+            self.solving = False
+            self.update_status("Stopping algorithm...")
+            self.root.after(100, self.complete_reset)
+        else:
+            self.complete_reset()
+
+    def complete_reset(self):
         self.current_state = copy.deepcopy(self.INITIAL_STATE)
         self.update_board()
         self.reset_solution()
@@ -411,7 +425,14 @@ class EightPuzzle:
         data = self.performance_data[starting_state_str]
         csp_algorithms = ["Min-Conflicts", "Forward Checking", "Backtracking"]
         
-        fig, summary = self.visualizer.create_csp_comparison(data, csp_algorithms)
+        # Check which CSP algorithms have data
+        valid_algorithms = [alg for alg in csp_algorithms if alg in data]
+        
+        if not valid_algorithms:
+            messagebox.showinfo("Info", "No CSP algorithms have been run for this start state yet.")
+            return
+            
+        fig, summary = self.visualizer.create_comparison_chart(data, valid_algorithms, title="CSP Algorithms Comparison")
         if fig:
             self.visualizer.display_chart(fig, summary, window_title="CSP Algorithms Comparison")
         else:
@@ -467,7 +488,7 @@ class EightPuzzle:
         self.solve_with_algorithm(self.solver.partially_observable_search, "Part. Observable")
 
     def solve_min_conflicts(self):
-        self.solve_with_algorithm(self.solver.min_conflicts, "Min-Conflicts")
+        self.solve_with_algorithm(lambda state: self.solver.min_conflicts(state, ui=self), "Min-Conflicts")
 
     def solve_forward_checking(self):
         self.solve_with_algorithm(lambda state: self.solver.forward_checking(state, ui=self), "Forward Checking")
