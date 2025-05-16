@@ -86,8 +86,8 @@ class PuzzleSolver:
         elapsed_time = time.time() - start_time
         return None, (len(visited), 0, elapsed_time)
 
-    def iddfs(self, initial_state, max_depth):
-        def dfs(state, path, depth, visited):
+    def ids(self, initial_state, max_depth):
+        def dls(state, path, depth, visited): # Depth-Limited Search
             if depth < 0:
                 return None
             if self.is_goal(state):
@@ -96,7 +96,7 @@ class PuzzleSolver:
             for neighbor in self.get_neighbor(state):
                 neighbor_str = str(neighbor)
                 if neighbor_str not in visited:
-                    result = dfs(neighbor, path + [state], depth - 1, visited)
+                    result = dls(neighbor, path + [state], depth - 1, visited)
                     if result is not None:
                         return result
             return None
@@ -105,7 +105,7 @@ class PuzzleSolver:
         start_time = time.time()
         for depth in range(max_depth + 1):
             visited = set()
-            result = dfs(initial_state, [], depth, visited)
+            result = dls(initial_state, [], depth, visited)
             total_visited.update(visited)
             if result is not None:
                 elapsed_time = time.time() - start_time

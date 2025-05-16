@@ -89,7 +89,7 @@ class EightPuzzle:
         uninformed_algorithms = [
             ("BFS", self.solve_bfs),
             ("DFS", self.solve_dfs),
-            ("IDDFS", self.solve_iddfs),
+            ("IDS", self.solve_ids),
             ("UCS", self.solve_ucs)
         ]
         for i, (text, command) in enumerate(uninformed_algorithms):
@@ -379,7 +379,7 @@ class EightPuzzle:
         data = self.performance_data[starting_state_str]
         
         algorithm_categories = {
-            "Uninformed": ["BFS", "DFS", "IDDFS", "UCS"],
+            "Uninformed": ["BFS", "DFS", "IDS", "UCS"],
             "Informed": ["Greedy", "A*", "IDA*"],
             "Local Search": ["Simple HC", "Steepest HC", "Stochastic HC", "Simulated Annealing", "Beam Search", "Genetic Algo"],
             "Complex": ["Nondeterministic", "No Observations", "Part. Observable"],
@@ -445,8 +445,8 @@ class EightPuzzle:
     def solve_dfs(self):
         self.solve_with_algorithm(self.solver.dfs, "DFS")
 
-    def solve_iddfs(self):
-        self.solve_with_algorithm(lambda state: self.solver.iddfs(state, max_depth=50), "IDDFS")
+    def solve_ids(self):
+        self.solve_with_algorithm(lambda state: self.solver.ids(state, max_depth=50), "IDS")
 
     def solve_ucs(self):
         self.solve_with_algorithm(self.solver.ucs, "UCS")

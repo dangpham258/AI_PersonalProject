@@ -103,7 +103,7 @@
 - Độ phức tạp tính toán và yêu cầu bộ nhớ của A* đều là $O(b^m)$
 
 <div style="text-align: center;">
-  <img src="PicsAndGif/AStar.gif" width="300"/>
+  <img src="PicsAndGif/Astar.gif" width="300"/>
 </div>
 
 ##### IDA* Search:
